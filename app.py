@@ -1,160 +1,24 @@
 from flask import Flask, render_template, request, send_file
-import yt_dlp
+import requests
+import io
 import os
-import uuid
 import traceback
 
 app = Flask(__name__)
 
 # ============================================================
-# PATHSs
+# PC DOWNLOADER
 # ============================================================
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DOWNLOADER_URL = os.environ.get(
+    "DOWNLOADER_URL",
+    ""
+).rstrip("/")
 
-DOWNLOAD_FOLDER = os.path.join(
-    BASE_DIR,
-    "downloads"
+DOWNLOADER_API_KEY = os.environ.get(
+    "DOWNLOADER_API_KEY",
+    ""
 )
-
-# ============================================================
-# BGUTIL POT SERVER
-# ============================================================
-
-BGUTIL_URL = os.environ.get(
-    "BGUTIL_URL",
-    "http://127.0.0.1:4416"
-)
-
-# ============================================================
-# COOKIES
-# ============================================================
-
-# cookies.txt should be located beside app.py
-COOKIES_FILE = os.path.join(
-    BASE_DIR,
-    "cookies.txt"
-)
-
-os.makedirs(
-    DOWNLOAD_FOLDER,
-    exist_ok=True
-)
-
-
-# ============================================================
-# COMMON YT-DLP OPTIONS
-# ============================================================
-
-def get_common_ytdlp_options():
-
-    options = {
-
-        # ----------------------------------------------------
-        # LOGGING
-        # ----------------------------------------------------
-
-        "quiet": False,
-
-        "verbose": True,
-
-        "no_warnings": False,
-
-        # ----------------------------------------------------
-        # PLAYLIST
-        # ----------------------------------------------------
-
-        "noplaylist": True,
-
-        # ----------------------------------------------------
-        # COOKIES
-        # ----------------------------------------------------
-
-        # Use the exported YouTube cookies.
-        #
-        # The file must exist at:
-        #
-        # /app/cookies.txt
-        #
-        # when running inside Docker/Render.
-
-        "cookiefile": COOKIES_FILE,
-
-        # ----------------------------------------------------
-        # JAVASCRIPT RUNTIME
-        # ----------------------------------------------------
-
-        "js_runtimes": {
-            "deno": {}
-        },
-
-        # ----------------------------------------------------
-        # EXTRACTOR ARGUMENTS
-        # ----------------------------------------------------
-
-        "extractor_args": {
-
-            # ------------------------------------------------
-            # YOUTUBE
-            # ------------------------------------------------
-
-            "youtube": {
-
-                "player_client": [
-                    "mweb"
-                ]
-
-            },
-
-            # ------------------------------------------------
-            # BGUTIL PO TOKEN PROVIDER
-            # ------------------------------------------------
-
-            "youtubepot-bgutilhttp": {
-
-                "base_url": [
-                    BGUTIL_URL
-                ]
-
-            }
-
-        }
-
-    }
-
-    return options
-
-
-# ============================================================
-# VIDEO INFO
-# ============================================================
-
-def get_video_info(url):
-
-    options = get_common_ytdlp_options()
-
-    print("========================================")
-    print("YOUTUBE REQUEST")
-    print("URL:", url)
-
-    if os.path.exists(COOKIES_FILE):
-        print("COOKIES: ENABLED")
-        print("COOKIE FILE:", COOKIES_FILE)
-    else:
-        print("COOKIES: NOT FOUND")
-        print("EXPECTED:", COOKIES_FILE)
-
-    print("JS RUNTIME: DENO")
-    print("PLAYER CLIENT: MWEB")
-    print("BGUTIL:", BGUTIL_URL)
-    print("========================================")
-
-    with yt_dlp.YoutubeDL(options) as ydl:
-
-        return ydl.extract_info(
-            url,
-            download=False
-        )
 
 
 # ============================================================
@@ -191,44 +55,12 @@ def process():
             error="Please enter a YouTube URL."
         )
 
-    try:
-
-        info = get_video_info(
-            url
-        )
-
-        video_id = info.get(
-            "id"
-        )
-
-        title = info.get(
-            "title",
-            "Unknown video"
-        )
-
-        return render_template(
-            "result.html",
-            video_id=video_id,
-            title=title,
-            url=url
-        )
-
-    except Exception as e:
-
-        print("========================================")
-        print("PROCESS ERROR")
-        print(repr(e))
-        print("========================================")
-
-        traceback.print_exc()
-
-        return render_template(
-            "index.html",
-            error=(
-                "Video could not be accessed: "
-                + str(e)
-            )
-        )
+    return render_template(
+        "result.html",
+        video_id="",
+        title="YouTube Video",
+        url=url
+    )
 
 
 # ============================================================
@@ -290,6 +122,24 @@ def download():
         )
 
     # --------------------------------------------------------
+    # CHECK DOWNLOADER CONFIG
+    # --------------------------------------------------------
+
+    if not DOWNLOADER_URL:
+
+        return (
+            "Downloader service is not configured.",
+            500
+        )
+
+    if not DOWNLOADER_API_KEY:
+
+        return (
+            "Downloader API key is not configured.",
+            500
+        )
+
+    # --------------------------------------------------------
     # QUALITY
     # --------------------------------------------------------
 
@@ -299,7 +149,10 @@ def download():
             quality
         )
 
-    except (ValueError, TypeError):
+    except (
+        ValueError,
+        TypeError
+    ):
 
         height = 720
 
@@ -313,143 +166,126 @@ def download():
         height = 720
 
     # --------------------------------------------------------
-    # OUTPUT FILE
+    # DOWNLOADER URL
     # --------------------------------------------------------
 
-    filename = str(
-        uuid.uuid4()
+    endpoint = (
+        DOWNLOADER_URL
+        + "/download"
     )
-
-    output_template = os.path.join(
-        DOWNLOAD_FOLDER,
-        filename + ".%(ext)s"
-    )
-
-    # --------------------------------------------------------
-    # YT-DLP OPTIONS
-    # --------------------------------------------------------
-
-    options = get_common_ytdlp_options()
-
-    options.update({
-
-        "format":
-            f"bestvideo[height<={height}][ext=mp4]+"
-            f"bestaudio[ext=m4a]/"
-            f"best[height<={height}][ext=mp4]/"
-            f"best[height<={height}]/"
-            "18",
-
-        "outtmpl":
-            output_template,
-
-        "merge_output_format":
-            "mp4"
-
-    })
-
-    # --------------------------------------------------------
-    # LOG
-    # --------------------------------------------------------
 
     print("========================================")
-    print("DOWNLOAD REQUEST")
+    print("REMOTE DOWNLOAD")
     print("URL:", url)
     print("QUALITY:", height)
-
-    if os.path.exists(COOKIES_FILE):
-        print("COOKIES: ENABLED")
-        print("COOKIE FILE:", COOKIES_FILE)
-    else:
-        print("COOKIES: NOT FOUND")
-        print("EXPECTED:", COOKIES_FILE)
-
-    print("JS RUNTIME: DENO")
-    print("PLAYER CLIENT: MWEB")
-    print("BGUTIL:", BGUTIL_URL)
+    print("DOWNLOADER:", DOWNLOADER_URL)
     print("========================================")
 
     # --------------------------------------------------------
-    # DOWNLOAD
+    # REQUEST TO PC
     # --------------------------------------------------------
 
     try:
 
-        with yt_dlp.YoutubeDL(
-            options
-        ) as ydl:
+        response = requests.post(
 
-            ydl.download(
-                [url]
+            endpoint,
+
+            headers={
+                "Authorization":
+                    "Bearer "
+                    + DOWNLOADER_API_KEY
+            },
+
+            json={
+                "url": url,
+                "quality": height
+            },
+
+            timeout=900
+
+        )
+
+        print(
+            "DOWNLOADER STATUS:",
+            response.status_code
+        )
+
+        # ----------------------------------------------------
+        # SUCCESS
+        # ----------------------------------------------------
+
+        if response.status_code == 200:
+
+            return send_file(
+
+                io.BytesIO(
+                    response.content
+                ),
+
+                mimetype=(
+                    response.headers.get(
+                        "Content-Type",
+                        "video/mp4"
+                    )
+                ),
+
+                as_attachment=True,
+
+                download_name="video.mp4"
+
             )
 
         # ----------------------------------------------------
-        # FIND OUTPUT
+        # ERROR FROM PC
         # ----------------------------------------------------
 
-        matching_files = [
+        try:
 
-            f
+            error_data = response.json()
 
-            for f in os.listdir(
-                DOWNLOAD_FOLDER
+            error_message = error_data.get(
+                "error",
+                "Downloader failed."
             )
 
-            if f.startswith(
-                filename + "."
-            )
+        except Exception:
 
-        ]
+            error_message = response.text
 
-        if not matching_files:
+        print("DOWNLOADER ERROR:")
+        print(error_message)
 
-            return (
-                "Download failed.",
-                500
-            )
+        return (
+            "Download failed: "
+            + error_message,
+            500
+        )
 
-        # ----------------------------------------------------
-        # PREFER MP4
-        # ----------------------------------------------------
+    except requests.exceptions.Timeout:
 
-        mp4_files = [
+        print(
+            "DOWNLOADER TIMEOUT"
+        )
 
-            f
+        return (
+            "The downloader took too long to respond.",
+            504
+        )
 
-            for f in matching_files
+    except requests.exceptions.ConnectionError as e:
 
-            if f.lower().endswith(
-                ".mp4"
-            )
+        print(
+            "DOWNLOADER CONNECTION ERROR"
+        )
 
-        ]
+        print(
+            repr(e)
+        )
 
-        if mp4_files:
-
-            filepath = os.path.join(
-                DOWNLOAD_FOLDER,
-                mp4_files[0]
-            )
-
-        else:
-
-            filepath = os.path.join(
-                DOWNLOAD_FOLDER,
-                matching_files[0]
-            )
-
-        # ----------------------------------------------------
-        # SEND FILE
-        # ----------------------------------------------------
-
-        return send_file(
-
-            filepath,
-
-            as_attachment=True,
-
-            download_name="video.mp4"
-
+        return (
+            "Could not connect to the PC downloader.",
+            502
         )
 
     except Exception as e:
@@ -466,6 +302,19 @@ def download():
             + str(e),
             500
         )
+
+
+# ============================================================
+# HEALTH
+# ============================================================
+
+@app.route("/health")
+def health():
+
+    return {
+        "status": "ok",
+        "downloader": DOWNLOADER_URL != ""
+    }
 
 
 # ============================================================
@@ -488,4 +337,3 @@ if __name__ == "__main__":
         debug=True
 
     )
-
