@@ -1,12 +1,66 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>YT Tool</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <!-- =====================================================
+         SEO
+    ====================================================== -->
+
+    <title>
+        YTTool - YouTube Video Downloader
+    </title>
+
+    <meta
+        name="description"
+        content="YTTool is a simple and fast YouTube video downloader. Paste a YouTube URL to preview and download videos in different quality options."
+    >
+
+    <meta
+        name="robots"
+        content="index, follow"
+    >
+
+    <meta
+        name="author"
+        content="AMOE"
+    >
+
+    <meta
+        name="keywords"
+        content="YouTube downloader, YouTube video downloader, download YouTube videos, YTTool"
+    >
+
+    <!-- =====================================================
+         OPEN GRAPH
+    ====================================================== -->
+
+    <meta
+        property="og:title"
+        content="YTTool - YouTube Video Downloader"
+    >
+
+    <meta
+        property="og:description"
+        content="A simple and fast YouTube video downloader. Paste a YouTube URL to get started."
+    >
+
+    <meta
+        property="og:type"
+        content="website"
+    >
+
+    <!-- =====================================================
+         STYLES
+    ====================================================== -->
 
     <style>
 
@@ -17,7 +71,11 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
 
             background:
                 linear-gradient(
@@ -31,37 +89,72 @@
             min-height: 100vh;
 
             display: flex;
+
             justify-content: center;
+
             align-items: center;
 
             padding: 20px;
+
         }
 
+
         .container {
+
             width: 100%;
+
             max-width: 650px;
 
             text-align: center;
+
         }
 
+
+        /* =================================================
+           LOGO
+        ================================================== */
+
         .logo {
+
             font-size: 34px;
+
             font-weight: bold;
 
             margin-bottom: 10px;
+
+            letter-spacing: -1px;
+
         }
+
 
         .logo span {
+
             color: #ef4444;
+
         }
 
+
+        /* =================================================
+           DESCRIPTION
+        ================================================== */
+
         .description {
+
             color: #94a3b8;
 
             margin-bottom: 30px;
+
+            line-height: 1.6;
+
         }
 
+
+        /* =================================================
+           CARD
+        ================================================== */
+
         .card {
+
             background: #1e293b;
 
             padding: 30px;
@@ -69,31 +162,58 @@
             border-radius: 18px;
 
             box-shadow:
-                0 20px 50px rgba(0,0,0,0.35);
+                0 20px 50px rgba(
+                    0,
+                    0,
+                    0,
+                    0.35
+                );
+
         }
 
-        .card h2 {
+
+        .card h1 {
+
+            font-size: 24px;
+
             margin-bottom: 10px;
+
         }
+
 
         .card p {
+
             color: #94a3b8;
 
             margin-bottom: 25px;
+
+            line-height: 1.6;
+
         }
 
+
+        /* =================================================
+           INPUT AREA
+        ================================================== */
+
         .input-area {
+
             display: flex;
 
             gap: 10px;
+
         }
 
+
         input {
+
             flex: 1;
 
             padding: 15px;
 
-            border: 1px solid #475569;
+            border:
+                1px solid
+                #475569;
 
             border-radius: 9px;
 
@@ -104,14 +224,46 @@
             outline: none;
 
             font-size: 15px;
+
+            transition:
+                border-color 0.2s,
+                box-shadow 0.2s;
+
         }
+
+
+        input::placeholder {
+
+            color: #64748b;
+
+        }
+
 
         input:focus {
+
             border-color: #ef4444;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(
+                    239,
+                    68,
+                    68,
+                    0.15
+                );
+
         }
 
+
+        /* =================================================
+           BUTTON
+        ================================================== */
+
         button {
-            padding: 15px 22px;
+
+            padding:
+                15px
+                22px;
 
             border: none;
 
@@ -124,13 +276,38 @@
             font-weight: bold;
 
             cursor: pointer;
+
+            transition:
+                background 0.2s,
+                transform 0.2s;
+
         }
+
 
         button:hover {
+
             background: #dc2626;
+
+            transform:
+                translateY(-1px);
+
         }
 
+
+        button:active {
+
+            transform:
+                translateY(0);
+
+        }
+
+
+        /* =================================================
+           ERROR
+        ================================================== */
+
         .error {
+
             background: #7f1d1d;
 
             color: #fecaca;
@@ -140,14 +317,25 @@
             border-radius: 8px;
 
             margin-bottom: 20px;
+
+            line-height: 1.5;
+
         }
 
+
+        /* =================================================
+           ADVERTISEMENT
+        ================================================== */
+
         .ad {
+
             margin-top: 25px;
 
-            height: 100px;
+            min-height: 100px;
 
-            border: 1px dashed #475569;
+            border:
+                1px dashed
+                #475569;
 
             display: flex;
 
@@ -158,24 +346,81 @@
             color: #64748b;
 
             font-size: 13px;
+
         }
 
+
+        /* =================================================
+           FOOTER
+        ================================================== */
+
         .footer {
+
             margin-top: 25px;
 
             color: #64748b;
 
             font-size: 13px;
+
+            line-height: 1.7;
+
         }
+
+
+        .creator {
+
+            color: #94a3b8;
+
+            font-weight: 600;
+
+        }
+
+
+        .creator span {
+
+            color: #ef4444;
+
+        }
+
+
+        /* =================================================
+           MOBILE
+        ================================================== */
 
         @media (max-width: 600px) {
 
-            .input-area {
-                flex-direction: column;
+            .logo {
+
+                font-size: 30px;
+
             }
 
-            button {
+
+            .card {
+
+                padding: 22px;
+
+            }
+
+
+            .input-area {
+
+                flex-direction: column;
+
+            }
+
+
+            input {
+
                 width: 100%;
+
+            }
+
+
+            button {
+
+                width: 100%;
+
             }
 
         }
@@ -187,72 +432,152 @@
 
 <body>
 
-    <div class="container">
+    <main class="container">
+
+
+        <!-- =================================================
+             BRAND
+        ================================================== -->
 
         <div class="logo">
+
             YT<span>Tool</span>
+
         </div>
+
 
         <div class="description">
-            Paste a YouTube link to preview the video.
+
+            A simple and fast tool for processing YouTube videos.
+
         </div>
 
 
-        <div class="card">
+        <!-- =================================================
+             MAIN CARD
+        ================================================== -->
 
-            <h2>YouTube Video Tool</h2>
+        <section class="card">
+
+
+            <h1>
+
+                YouTube Video Downloader
+
+            </h1>
+
 
             <p>
-                Enter a YouTube video URL below.
+
+                Paste a YouTube video URL below to get started.
+
             </p>
 
 
             {% if error %}
 
-                <div class="error">
+                <div
+                    class="error"
+                    role="alert"
+                >
+
                     {{ error }}
+
                 </div>
 
             {% endif %}
 
 
-            <form action="/process" method="POST">
+            <form
+                action="/process"
+                method="POST"
+            >
 
                 <div class="input-area">
 
+
                     <input
-                        type="text"
+                        type="url"
                         name="url"
-                        placeholder="https://youtube.com/watch?v=..."
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        autocomplete="off"
                         required
+                        aria-label="YouTube video URL"
                     >
 
-                    <button type="submit">
+
+                    <button
+                        type="submit"
+                    >
+
                         Continue
+
                     </button>
+
 
                 </div>
 
             </form>
 
 
-            <div class="ad">
+            <!-- =================================================
+                 ADVERTISEMENT
+            ================================================== -->
+
+            <div
+                class="ad"
+                aria-label="Advertisement"
+            >
 
                 ADVERTISEMENT
 
             </div>
 
-        </div>
+
+        </section>
 
 
-        <div class="footer">
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
 
-            © 2026 YTTool
+        <footer class="footer">
 
-        </div>
+            <div>
 
-    </div>
+                © 2026 YTTool. All rights reserved.
+
+            </div>
+
+
+            <div class="creator">
+
+                Project created by
+                <span>AMOE</span>
+
+            </div>
+
+        </footer>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         ADSTERRA
+    ====================================================== -->
+
+    <script
+        src="https://pl30899515.effectivecpmnetwork.com/20/aa/1a/20aa1a03629949d8f19fe152318007c6.js"
+    ></script>
+
+
+    <script
+        src="https://pl30899516.effectivecpmnetwork.com/25/55/7a/25557a6f130480a3dbeb8889ec15d123.js"
+    ></script>
+
 
 </body>
 
 </html>
+```
