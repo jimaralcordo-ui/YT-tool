@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, send_file
 import yt_dlp
 import os
@@ -18,8 +17,14 @@ DOWNLOAD_FOLDER = os.path.join(
     "downloads"
 )
 
-# bgutil POT server
-BGUTIL_URL = "http://127.0.0.1:4416"
+# ============================================================
+# BGUTIL POT SERVER
+# ============================================================
+
+BGUTIL_URL = os.environ.get(
+    "BGUTIL_URL",
+    "http://127.0.0.1:4416"
+)
 
 os.makedirs(
     DOWNLOAD_FOLDER,
@@ -28,33 +33,59 @@ os.makedirs(
 
 
 # ============================================================
-# YT-DLP OPTIONS
+# COMMON YT-DLP OPTIONS
 # ============================================================
 
-def get_ytdlp_options():
+def get_common_ytdlp_options():
 
-    options = {
+    return {
 
-        "quiet": True,
+        # ----------------------------------------------------
+        # LOGGING
+        # ----------------------------------------------------
+
+        # Keep verbose enabled temporarily so we can see
+        # whether bgutil is actually being used.
+        "quiet": False,
+
+        "verbose": True,
 
         "no_warnings": False,
 
+        # ----------------------------------------------------
+        # PLAYLIST
+        # ----------------------------------------------------
+
         "noplaylist": True,
+
+        # ----------------------------------------------------
+        # JAVASCRIPT RUNTIME
+        # ----------------------------------------------------
+
+        # yt-dlp can use Deno for YouTube's current JS
+        # challenge / extraction requirements.
+        "js_runtimes": {
+            "deno": {}
+        },
+
+        # ----------------------------------------------------
+        # EXTRACTOR ARGUMENTS
+        # ----------------------------------------------------
 
         "extractor_args": {
 
+            # YouTube client
             "youtube": {
 
-                # Use mweb client
                 "player_client": [
                     "mweb"
                 ]
 
             },
 
+            # bgutil PO Token provider
             "youtubepot-bgutilhttp": {
 
-                # bgutil server
                 "base_url": [
                     BGUTIL_URL
                 ]
@@ -65,8 +96,6 @@ def get_ytdlp_options():
 
     }
 
-    return options
-
 
 # ============================================================
 # VIDEO INFO
@@ -74,12 +103,14 @@ def get_ytdlp_options():
 
 def get_video_info(url):
 
-    options = get_ytdlp_options()
+    options = get_common_ytdlp_options()
 
     print("========================================")
     print("YOUTUBE REQUEST")
     print("URL:", url)
     print("COOKIES: DISABLED")
+    print("JS RUNTIME: DENO")
+    print("PLAYER CLIENT: MWEB")
     print("BGUTIL:", BGUTIL_URL)
     print("========================================")
 
@@ -149,10 +180,10 @@ def process():
 
     except Exception as e:
 
-        print(
-            "PROCESS ERROR:",
-            repr(e)
-        )
+        print("========================================")
+        print("PROCESS ERROR")
+        print(repr(e))
+        print("========================================")
 
         traceback.print_exc()
 
@@ -233,7 +264,7 @@ def download():
             quality
         )
 
-    except ValueError:
+    except (ValueError, TypeError):
 
         height = 720
 
@@ -263,7 +294,9 @@ def download():
     # YT-DLP OPTIONS
     # --------------------------------------------------------
 
-    options = {
+    options = get_common_ytdlp_options()
+
+    options.update({
 
         "format":
             f"bestvideo[height<={height}][ext=mp4]+"
@@ -276,38 +309,9 @@ def download():
             output_template,
 
         "merge_output_format":
-            "mp4",
+            "mp4"
 
-        "noplaylist":
-            True,
-
-        "quiet":
-            True,
-
-        "no_warnings":
-            False,
-
-        "extractor_args": {
-
-            "youtube": {
-
-                "player_client": [
-                    "mweb"
-                ]
-
-            },
-
-            "youtubepot-bgutilhttp": {
-
-                "base_url": [
-                    BGUTIL_URL
-                ]
-
-            }
-
-        }
-
-    }
+    })
 
     # --------------------------------------------------------
     # LOG
@@ -318,6 +322,8 @@ def download():
     print("URL:", url)
     print("QUALITY:", height)
     print("COOKIES: DISABLED")
+    print("JS RUNTIME: DENO")
+    print("PLAYER CLIENT: MWEB")
     print("BGUTIL:", BGUTIL_URL)
     print("========================================")
 
@@ -406,10 +412,10 @@ def download():
 
     except Exception as e:
 
-        print(
-            "DOWNLOAD ERROR:",
-            repr(e)
-        )
+        print("========================================")
+        print("DOWNLOAD ERROR")
+        print(repr(e))
+        print("========================================")
 
         traceback.print_exc()
 
@@ -427,12 +433,16 @@ def download():
 if __name__ == "__main__":
 
     app.run(
+
         host="0.0.0.0",
+
         port=int(
             os.environ.get(
                 "PORT",
                 5000
             )
         ),
+
         debug=True
+
     )
