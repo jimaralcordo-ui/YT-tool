@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Please Wait</title>
+</head>
+
+<body>
+
+    <h1>Please Wait...</h1>
+
+    <p>This is a test waiting page.</p>
+
+    <a href="/continue/{{ request.path.split('/')[-1] }}">
+        <button>Continue</button>
+    </a>
+
+</body>
+
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>YT Tool</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0f172a,
+                    #111827
+                );
+
+            color: white;
+
+            min-height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 34px;
+            font-weight: bold;
+
+            margin-bottom: 10px;
+        }
+
+        .logo span {
+            color: #ef4444;
+        }
+
+        .description {
+            color: #94a3b8;
+
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #1e293b;
+
+            padding: 30px;
+
+            border-radius: 18px;
+
+            box-shadow:
+                0 20px 50px rgba(0,0,0,0.35);
+        }
+
+        .card h2 {
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #94a3b8;
+
+            margin-bottom: 25px;
+        }
+
+        .input-area {
+            display: flex;
+
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+
+            padding: 15px;
+
+            border: 1px solid #475569;
+
+            border-radius: 9px;
+
+            background: #0f172a;
+
+            color: white;
+
+            outline: none;
+
+            font-size: 15px;
+        }
+
+        input:focus {
+            border-color: #ef4444;
+        }
+
+        button {
+            padding: 15px 22px;
+
+            border: none;
+
+            border-radius: 9px;
+
+            background: #ef4444;
+
+            color: white;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #dc2626;
+        }
+
+        .error {
+            background: #7f1d1d;
+
+            color: #fecaca;
+
+            padding: 12px;
+
+            border-radius: 8px;
+
+            margin-bottom: 20px;
+        }
+
+        .ad {
+            margin-top: 25px;
+
+            height: 100px;
+
+            border: 1px dashed #475569;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            color: #64748b;
+
+            font-size: 13px;
+        }
+
+        .footer {
+            margin-top: 25px;
+
+            color: #64748b;
+
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+
+            .input-area {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <div class="logo">
+            YT<span>Tool</span>
+        </div>
+
+        <div class="description">
+            Paste a YouTube link to preview the video.
+        </div>
+
+
+        <div class="card">
+
+            <h2>YouTube Video Tool</h2>
+
+            <p>
+                Enter a YouTube video URL below.
+            </p>
+
+
+            {% if error %}
+
+                <div class="error">
+                    {{ error }}
+                </div>
+
+            {% endif %}
+
+
+            <form action="/process" method="POST">
+
+                <div class="input-area">
+
+                    <input
+                        type="text"
+                        name="url"
+                        placeholder="https://youtube.com/watch?v=..."
+                        required
+                    >
+
+                    <button type="submit">
+                        Continue
+                    </button>
+
+                </div>
+
+            </form>
+
+
+            <div class="ad">
+
+                ADVERTISEMENT
+
+            </div>
+
+        </div>
+
+
+        <div class="footer">
+
+            © 2026 YTTool
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
