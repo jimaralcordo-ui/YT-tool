@@ -52,8 +52,15 @@ COPY . .
 # BGUTIL POT PROVIDER
 # ============================================================
 
-RUN cd /app/bgutil-ytdlp-pot-provider/server && \
-    npm install
+WORKDIR /app/bgutil-ytdlp-pot-provider/server
+
+RUN npm install
+
+# ============================================================
+# RETURN TO APP
+# ============================================================
+
+WORKDIR /app
 
 # ============================================================
 # PORT
