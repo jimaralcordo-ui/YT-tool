@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+
+downloads/
+static/videos/*.mp4
+
+.env
+.env.*

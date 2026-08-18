@@ -1,23 +1,301 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Please Wait</title>
+    <title>Preparing Download</title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+
+            min-height: 100vh;
+
+            background: #0f172a;
+
+            color: white;
+
+            font-family: Arial, sans-serif;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            padding: 20px;
+        }
+
+
+        .container {
+            width: 100%;
+
+            max-width: 600px;
+
+            text-align: center;
+        }
+
+
+        .card {
+            background: #1e293b;
+
+            padding: 35px;
+
+            border-radius: 18px;
+
+            box-shadow:
+                0 20px 50px rgba(0, 0, 0, 0.35);
+        }
+
+
+        h1 {
+            margin: 0 0 10px 0;
+        }
+
+
+        .description {
+            color: #94a3b8;
+
+            margin: 0 0 30px 0;
+        }
+
+
+        /*
+            NATIVE BANNER
+            4:1 RESPONSIVE BOX
+        */
+
+        .ad {
+            width: 100%;
+
+            aspect-ratio: 4 / 1;
+
+            min-height: 100px;
+
+            border: 1px dashed #475569;
+
+            border-radius: 10px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            margin: 0 auto 25px auto;
+
+            overflow: hidden;
+
+            position: relative;
+
+            background: #0f172a;
+        }
+
+
+        .ad iframe,
+        .ad img,
+        .ad div {
+            max-width: 100%;
+        }
+
+
+        #countdown {
+            font-size: 45px;
+
+            font-weight: bold;
+
+            margin: 25px 0;
+        }
+
+
+        #downloadButton {
+            display: none;
+
+            padding: 14px 25px;
+
+            background: #22c55e;
+
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 9px;
+
+            font-weight: bold;
+
+            border: none;
+
+            cursor: pointer;
+
+            font-size: 16px;
+        }
+
+
+        #downloadButton:hover {
+            background: #16a34a;
+        }
+
+    </style>
+
 </head>
+
 
 <body>
 
-    <h1>Please Wait...</h1>
 
-    <p>This is a test waiting page.</p>
+    <!--
+        =========================================
+        ADSTERRA SOCIAL BAR
+        =========================================
+    -->
 
-    <a href="/continue/{{ request.path.split('/')[-1] }}">
-        <button>Continue</button>
-    </a>
+    <script
+        src="https://pl30899516.effectivecpmnetwork.com/25/55/7a/25557a6f130480a3dbeb8889ec15d123.js">
+    </script>
+
+
+    <!--
+        =========================================
+        ADSTERRA POPUNDER
+        =========================================
+    -->
+
+    <script
+        src="https://pl30899515.effectivecpmnetwork.com/20/aa/1a/20aa1a03629949d8f19fe152318007c6.js">
+    </script>
+
+
+    <div class="container">
+
+        <div class="card">
+
+
+            <h1>
+                Preparing Download
+            </h1>
+
+
+            <p class="description">
+                Please wait while we check download availability.
+            </p>
+
+
+            <!--
+                =========================================
+                ADSTERRA NATIVE BANNER 4:1
+
+                ITO LANG ANG MAY VISIBLE AD BOX
+                =========================================
+            -->
+
+            <div class="ad">
+
+                <script
+                    async="async"
+                    data-cfasync="false"
+                    src="https://pl30899880.effectivecpmnetwork.com/66070269219bf93f2a15d2dabb66eff7/invoke.js">
+                </script>
+
+
+                <div
+                    id="container-66070269219bf93f2a15d2dabb66eff7">
+                </div>
+
+            </div>
+
+
+            <!-- COUNTDOWN -->
+
+            <div id="countdown">
+                5
+            </div>
+
+
+            <!-- DOWNLOAD FORM -->
+
+            <form
+                id="downloadForm"
+                action="/download"
+                method="POST"
+            >
+
+                <input
+                    type="hidden"
+                    name="url"
+                    value="{{ url }}"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="quality"
+                    value="{{ quality }}"
+                >
+
+
+                <button
+                    type="submit"
+                    id="downloadButton"
+                >
+                    Download
+                </button>
+
+            </form>
+
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        let seconds = 5;
+
+
+        const countdown =
+            document.getElementById("countdown");
+
+
+        const button =
+            document.getElementById("downloadButton");
+
+
+        const timer = setInterval(() => {
+
+            seconds--;
+
+            countdown.textContent = seconds;
+
+
+            if (seconds <= 0) {
+
+                clearInterval(timer);
+
+                countdown.textContent = "Ready!";
+
+                button.style.display = "inline-block";
+
+            }
+
+        }, 1000);
+
+    </script>
+
 
 </body>
 
 </html>
+
