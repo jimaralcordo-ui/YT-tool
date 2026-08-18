@@ -12,6 +12,7 @@ RUN apt-get update && \
     curl \
     ca-certificates \
     gnupg \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
@@ -19,7 +20,8 @@ RUN apt-get update && \
 # ============================================================
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/*
 
 RUN node --version && npm --version
@@ -32,6 +34,8 @@ RUN curl -fsSL https://deno.land/install.sh | sh
 
 ENV DENO_INSTALL=/root/.deno
 ENV PATH="/root/.deno/bin:${PATH}"
+
+RUN deno --version
 
 # ============================================================
 # PYTHON DEPENDENCIES
@@ -51,7 +55,7 @@ COPY . .
 # BGUTIL POT PROVIDER
 # ============================================================
 
-RUN cd bgutil-ytdlp-pot-provider/server && \
+RUN cd /app/bgutil-ytdlp-pot-provider/server && \
     npm install && \
     npm run build
 
