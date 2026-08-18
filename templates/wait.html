@@ -69,12 +69,16 @@
             color: #94a3b8;
 
             margin: 0 0 30px 0;
+
+            line-height: 1.5;
         }
 
 
         /*
+            =========================================
             NATIVE BANNER
             4:1 RESPONSIVE BOX
+            =========================================
         */
 
         .ad {
@@ -111,14 +115,28 @@
         }
 
 
+        /*
+            =========================================
+            COUNTDOWN
+            =========================================
+        */
+
         #countdown {
             font-size: 45px;
 
             font-weight: bold;
 
             margin: 25px 0;
+
+            min-height: 54px;
         }
 
+
+        /*
+            =========================================
+            DOWNLOAD BUTTON
+            =========================================
+        */
 
         #downloadButton {
             display: none;
@@ -140,12 +158,104 @@
             cursor: pointer;
 
             font-size: 16px;
+
+            transition: 0.2s;
         }
 
 
         #downloadButton:hover {
             background: #16a34a;
         }
+
+
+        #downloadButton:disabled {
+            background: #475569;
+
+            cursor: not-allowed;
+
+            opacity: 0.8;
+        }
+
+
+        /*
+            =========================================
+            LOADING SPINNER
+            =========================================
+        */
+
+        .spinner {
+
+            display: inline-block;
+
+            width: 16px;
+
+            height: 16px;
+
+            border: 3px solid rgba(255,255,255,0.35);
+
+            border-top-color: white;
+
+            border-radius: 50%;
+
+            animation: spin 0.8s linear infinite;
+
+            vertical-align: middle;
+
+            margin-right: 8px;
+        }
+
+
+        @keyframes spin {
+
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+
+        }
+
+
+        /*
+            =========================================
+            STATUS
+            =========================================
+        */
+
+        #status {
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 14px;
+
+            border-radius: 9px;
+
+            font-weight: bold;
+
+            line-height: 1.5;
+        }
+
+
+        .success {
+
+            background: #14532d;
+
+            color: #bbf7d0;
+
+        }
+
+
+        .failed {
+
+            background: #7f1d1d;
+
+            color: #fecaca;
+
+        }
+
 
     </style>
 
@@ -182,21 +292,22 @@
         <div class="card">
 
 
-            <h1>
+            <h1 id="title">
                 Preparing Download
             </h1>
 
 
-            <p class="description">
-                Please wait while we check download availability.
+            <p
+                class="description"
+                id="description"
+            >
+                Please wait while we prepare your download.
             </p>
 
 
             <!--
                 =========================================
-                ADSTERRA NATIVE BANNER 4:1
-
-                ITO LANG ANG MAY VISIBLE AD BOX
+                ADSTERRA NATIVE BANNER
                 =========================================
             -->
 
@@ -216,14 +327,22 @@
             </div>
 
 
-            <!-- COUNTDOWN -->
+            <!--
+                =========================================
+                COUNTDOWN
+                =========================================
+            -->
 
             <div id="countdown">
                 5
             </div>
 
 
-            <!-- DOWNLOAD FORM -->
+            <!--
+                =========================================
+                DOWNLOAD FORM
+                =========================================
+            -->
 
             <form
                 id="downloadForm"
@@ -255,6 +374,15 @@
             </form>
 
 
+            <!--
+                =========================================
+                STATUS MESSAGE
+                =========================================
+            -->
+
+            <div id="status"></div>
+
+
         </div>
 
     </div>
@@ -262,35 +390,390 @@
 
     <script>
 
-        let seconds = 5;
-
+        /*
+            =========================================
+            ELEMENTS
+            =========================================
+        */
 
         const countdown =
-            document.getElementById("countdown");
+            document.getElementById(
+                "countdown"
+            );
 
 
         const button =
-            document.getElementById("downloadButton");
+            document.getElementById(
+                "downloadButton"
+            );
 
 
-        const timer = setInterval(() => {
+        const form =
+            document.getElementById(
+                "downloadForm"
+            );
 
-            seconds--;
 
-            countdown.textContent = seconds;
+        const title =
+            document.getElementById(
+                "title"
+            );
 
 
-            if (seconds <= 0) {
+        const description =
+            document.getElementById(
+                "description"
+            );
 
-                clearInterval(timer);
 
-                countdown.textContent = "Ready!";
+        const status =
+            document.getElementById(
+                "status"
+            );
 
-                button.style.display = "inline-block";
+
+        /*
+            =========================================
+            COUNTDOWN
+            =========================================
+        */
+
+        let seconds = 5;
+
+
+        const timer = setInterval(
+            () => {
+
+                seconds--;
+
+                countdown.textContent =
+                    seconds;
+
+
+                if (seconds <= 0) {
+
+                    clearInterval(
+                        timer
+                    );
+
+
+                    countdown.textContent =
+                        "Ready!";
+
+
+                    button.style.display =
+                        "inline-block";
+
+
+                    description.textContent =
+                        "Your download is ready.";
+
+                }
+
+            },
+            1000
+        );
+
+
+        /*
+            =========================================
+            DOWNLOAD
+            =========================================
+        */
+
+        form.addEventListener(
+            "submit",
+            async function(event) {
+
+                /*
+                    Prevent normal form submission
+                    so we can monitor the download.
+                */
+
+                event.preventDefault();
+
+
+                /*
+                    Prevent double-click / spam.
+                */
+
+                if (
+                    button.disabled
+                ) {
+
+                    return;
+
+                }
+
+
+                /*
+                    Disable button immediately.
+                */
+
+                button.disabled =
+                    true;
+
+
+                button.innerHTML =
+                    '<span class="spinner"></span>Downloading...';
+
+
+                title.textContent =
+                    "Downloading";
+
+
+                description.textContent =
+                    "Please wait while your video is being downloaded.";
+
+
+                countdown.style.display =
+                    "none";
+
+
+                status.style.display =
+                    "none";
+
+
+                /*
+                    Get form data.
+                */
+
+                const formData =
+                    new FormData(form);
+
+
+                try {
+
+                    /*
+                        Send request to Flask.
+                    */
+
+                    const response =
+                        await fetch(
+                            "/download",
+                            {
+
+                                method: "POST",
+
+                                body: formData
+
+                            }
+                        );
+
+
+                    /*
+                        Check HTTP status.
+                    */
+
+                    if (
+                        !response.ok
+                    ) {
+
+                        let errorMessage =
+                            "Download failed.";
+
+
+                        try {
+
+                            const errorText =
+                                await response.text();
+
+
+                            if (
+                                errorText
+                            ) {
+
+                                errorMessage =
+                                    errorText;
+
+                            }
+
+                        }
+                        catch (
+                            error
+                        ) {
+
+                            console.error(
+                                error
+                            );
+
+                        }
+
+
+                        throw new Error(
+                            errorMessage
+                        );
+
+                    }
+
+
+                    /*
+                        Convert response to Blob.
+                    */
+
+                    const blob =
+                        await response.blob();
+
+
+                    /*
+                        Make sure we actually
+                        received a file.
+                    */
+
+                    if (
+                        !blob ||
+                        blob.size === 0
+                    ) {
+
+                        throw new Error(
+                            "The downloader returned an empty file."
+                        );
+
+                    }
+
+
+                    /*
+                        Create temporary URL.
+                    */
+
+                    const downloadURL =
+                        window.URL.createObjectURL(
+                            blob
+                        );
+
+
+                    /*
+                        Create temporary
+                        download link.
+                    */
+
+                    const link =
+                        document.createElement(
+                            "a"
+                        );
+
+
+                    link.href =
+                        downloadURL;
+
+
+                    link.download =
+                        "video.mp4";
+
+
+                    document.body.appendChild(
+                        link
+                    );
+
+
+                    /*
+                        Start browser download.
+                    */
+
+                    link.click();
+
+
+                    /*
+                        Remove temporary link.
+                    */
+
+                    link.remove();
+
+
+                    /*
+                        Release object URL
+                        after a short delay.
+                    */
+
+                    setTimeout(
+                        () => {
+
+                            window.URL.revokeObjectURL(
+                                downloadURL
+                            );
+
+                        },
+                        1000
+                    );
+
+
+                    /*
+                        SUCCESS
+                    */
+
+                    title.textContent =
+                        "Download Complete";
+
+
+                    description.textContent =
+                        "Your video has been downloaded successfully.";
+
+
+                    button.style.display =
+                        "none";
+
+
+                    status.className =
+                        "success";
+
+
+                    status.innerHTML =
+                        "✓ Download Complete";
+
+
+                    status.style.display =
+                        "block";
+
+                }
+                catch (
+                    error
+                ) {
+
+                    /*
+                        ERROR
+                    */
+
+                    console.error(
+                        "DOWNLOAD ERROR:",
+                        error
+                    );
+
+
+                    title.textContent =
+                        "Download Failed";
+
+
+                    description.textContent =
+                        "Something went wrong while downloading your video.";
+
+
+                    button.disabled =
+                        false;
+
+
+                    button.innerHTML =
+                        "Try Again";
+
+
+                    status.className =
+                        "failed";
+
+
+                    status.textContent =
+                        "✕ " +
+                        (
+                            error.message ||
+                            "Download failed."
+                        );
+
+
+                    status.style.display =
+                        "block";
+
+                }
 
             }
-
-        }, 1000);
+        );
 
     </script>
 
@@ -298,4 +781,4 @@
 </body>
 
 </html>
-
+```

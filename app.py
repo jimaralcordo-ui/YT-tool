@@ -127,12 +127,20 @@ def download():
 
     if not DOWNLOADER_URL:
 
+        print(
+            "ERROR: DOWNLOADER_URL is not configured."
+        )
+
         return (
             "Downloader service is not configured.",
             500
         )
 
     if not DOWNLOADER_API_KEY:
+
+        print(
+            "ERROR: DOWNLOADER_API_KEY is not configured."
+        )
 
         return (
             "Downloader API key is not configured.",
@@ -174,15 +182,35 @@ def download():
         + "/download"
     )
 
-    print("========================================")
-    print("REMOTE DOWNLOAD")
-    print("URL:", url)
-    print("QUALITY:", height)
-    print("DOWNLOADER:", DOWNLOADER_URL)
-    print("========================================")
+    print(
+        "========================================"
+    )
+
+    print(
+        "REMOTE DOWNLOAD"
+    )
+
+    print(
+        "URL:",
+        url
+    )
+
+    print(
+        "QUALITY:",
+        height
+    )
+
+    print(
+        "DOWNLOADER:",
+        DOWNLOADER_URL
+    )
+
+    print(
+        "========================================"
+    )
 
     # --------------------------------------------------------
-    # REQUEST TO PC
+    # REQUEST TO PC WORKER
     # --------------------------------------------------------
 
     try:
@@ -217,6 +245,10 @@ def download():
 
         if response.status_code == 200:
 
+            print(
+                "DOWNLOAD SUCCESS"
+            )
+
             return send_file(
 
                 io.BytesIO(
@@ -237,7 +269,7 @@ def download():
             )
 
         # ----------------------------------------------------
-        # ERROR FROM PC
+        # ERROR FROM PC WORKER
         # ----------------------------------------------------
 
         try:
@@ -251,16 +283,30 @@ def download():
 
         except Exception:
 
-            error_message = response.text
+            error_message = (
+                response.text
+                or "Downloader failed."
+            )
 
-        print("DOWNLOADER ERROR:")
-        print(error_message)
+        print(
+            "DOWNLOADER ERROR:"
+        )
+
+        print(
+            error_message
+        )
 
         return (
             "Download failed: "
             + error_message,
-            500
+            response.status_code
+            if response.status_code >= 400
+            else 500
         )
+
+    # --------------------------------------------------------
+    # TIMEOUT
+    # --------------------------------------------------------
 
     except requests.exceptions.Timeout:
 
@@ -272,6 +318,10 @@ def download():
             "The downloader took too long to respond.",
             504
         )
+
+    # --------------------------------------------------------
+    # CONNECTION ERROR
+    # --------------------------------------------------------
 
     except requests.exceptions.ConnectionError as e:
 
@@ -288,12 +338,27 @@ def download():
             502
         )
 
+    # --------------------------------------------------------
+    # OTHER ERROR
+    # --------------------------------------------------------
+
     except Exception as e:
 
-        print("========================================")
-        print("DOWNLOAD ERROR")
-        print(repr(e))
-        print("========================================")
+        print(
+            "========================================"
+        )
+
+        print(
+            "DOWNLOAD ERROR"
+        )
+
+        print(
+            repr(e)
+        )
+
+        print(
+            "========================================"
+        )
 
         traceback.print_exc()
 
