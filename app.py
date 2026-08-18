@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, send_file
 import yt_dlp
 import os
@@ -18,12 +17,24 @@ DOWNLOAD_FOLDER = os.path.join(
     "downloads"
 )
 
-COOKIE_FILE = os.path.join(
+# Render Secret File location.
+# If running locally, fall back to cookies.txt
+# beside app.py.
+RENDER_COOKIE_FILE = "/etc/secrets/cookies.txt"
+LOCAL_COOKIE_FILE = os.path.join(
     BASE_DIR,
     "cookies.txt"
 )
 
-os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+if os.path.exists(RENDER_COOKIE_FILE):
+    COOKIE_FILE = RENDER_COOKIE_FILE
+else:
+    COOKIE_FILE = LOCAL_COOKIE_FILE
+
+os.makedirs(
+    DOWNLOAD_FOLDER,
+    exist_ok=True
+)
 
 
 # --------------------------------------------------
@@ -37,16 +48,17 @@ def get_ytdlp_options():
         "no_warnings": False,
         "noplaylist": True,
 
-        # Use the cookies exported from the browser.
+        # Use Render Secret File in production,
+        # or local cookies.txt during development.
         "cookiefile": COOKIE_FILE,
 
-        # The client that worked successfully during
-        # our local test.
+        # mweb successfully returned real formats
+        # during local testing.
         "extractor_args": {
             "youtube": {
                 "player_client": ["mweb"]
             }
-        },
+        }
     }
 
     return options
@@ -60,25 +72,33 @@ def get_video_info(url):
 
     options = get_ytdlp_options()
 
-    # Debug information for Render logs.
     print("========================================")
     print("YouTube request")
     print("Cookie file:", COOKIE_FILE)
-    print("Cookie exists:", os.path.exists(COOKIE_FILE))
+    print(
+        "Cookie exists:",
+        os.path.exists(COOKIE_FILE)
+    )
 
     if os.path.exists(COOKIE_FILE):
+
         try:
+
             print(
                 "Cookie file size:",
-                os.path.getsize(COOKIE_FILE),
+                os.path.getsize(
+                    COOKIE_FILE
+                ),
                 "bytes"
             )
+
         except Exception:
             pass
 
     print("========================================")
 
     with yt_dlp.YoutubeDL(options) as ydl:
+
         return ydl.extract_info(
             url,
             download=False
@@ -221,8 +241,7 @@ def download():
     # AUTHORIZATION
     # --------------------------------------------------
     #
-    # Keep your own authorization/licensing checks here
-    # before allowing downloads.
+    # Keep your own authorization/licensing checks here.
     #
 
     authorized = True
@@ -296,14 +315,12 @@ def download():
         "no_warnings":
             False,
 
-        # IMPORTANT:
-        # Use the same cookies that worked locally.
+        # Use Render Secret File or local cookies.
         "cookiefile":
             COOKIE_FILE,
 
-        # IMPORTANT:
-        # mweb was the client that successfully
-        # returned real video formats locally.
+        # mweb was the client that returned
+        # real video formats locally.
         "extractor_args": {
 
             "youtube": {
@@ -325,6 +342,7 @@ def download():
     print("URL:", url)
     print("Quality:", height)
     print("Cookie file:", COOKIE_FILE)
+
     print(
         "Cookie exists:",
         os.path.exists(COOKIE_FILE)
