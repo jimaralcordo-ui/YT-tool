@@ -3,6 +3,7 @@ import yt_dlp
 import os
 import uuid
 import traceback
+import shutil
 
 app = Flask(__name__)
 
@@ -17,19 +18,17 @@ DOWNLOAD_FOLDER = os.path.join(
     "downloads"
 )
 
-# Render Secret File location.
-# If running locally, fall back to cookies.txt
-# beside app.py.
+# Render Secret File
 RENDER_COOKIE_FILE = "/etc/secrets/cookies.txt"
+
+# Local development cookie file
 LOCAL_COOKIE_FILE = os.path.join(
     BASE_DIR,
     "cookies.txt"
 )
 
-if os.path.exists(RENDER_COOKIE_FILE):
-    COOKIE_FILE = RENDER_COOKIE_FILE
-else:
-    COOKIE_FILE = LOCAL_COOKIE_FILE
+# Writable runtime location
+RUNTIME_COOKIE_FILE = "/tmp/yt-dlp-cookies.txt"
 
 os.makedirs(
     DOWNLOAD_FOLDER,
@@ -38,28 +37,120 @@ os.makedirs(
 
 
 # --------------------------------------------------
+# COOKIE SETUP
+# --------------------------------------------------
+
+def prepare_cookie_file():
+
+    # ----------------------------------------------
+    # Render
+    # ----------------------------------------------
+
+    if os.path.exists(RENDER_COOKIE_FILE):
+
+        try:
+
+            shutil.copyfile(
+                RENDER_COOKIE_FILE,
+                RUNTIME_COOKIE_FILE
+            )
+
+            print(
+                "Using Render Secret File:"
+            )
+
+            print(
+                RENDER_COOKIE_FILE
+            )
+
+            print(
+                "Copied cookies to:"
+            )
+
+            print(
+                RUNTIME_COOKIE_FILE
+            )
+
+            return RUNTIME_COOKIE_FILE
+
+        except Exception as e:
+
+            print(
+                "ERROR copying Render cookies:",
+                repr(e)
+            )
+
+            raise
+
+    # ----------------------------------------------
+    # Local development
+    # ----------------------------------------------
+
+    if os.path.exists(LOCAL_COOKIE_FILE):
+
+        print(
+            "Using local cookie file:"
+        )
+
+        print(
+            LOCAL_COOKIE_FILE
+        )
+
+        return LOCAL_COOKIE_FILE
+
+    # ----------------------------------------------
+    # No cookies found
+    # ----------------------------------------------
+
+    print(
+        "WARNING: No cookies.txt found."
+    )
+
+    return None
+
+
+# --------------------------------------------------
 # YOUTUBE / YT-DLP CONFIG
 # --------------------------------------------------
 
 def get_ytdlp_options():
 
+    cookie_file = prepare_cookie_file()
+
     options = {
-        "quiet": True,
-        "no_warnings": False,
-        "noplaylist": True,
 
-        # Use Render Secret File in production,
-        # or local cookies.txt during development.
-        "cookiefile": COOKIE_FILE,
+        "quiet":
+            True,
 
-        # mweb successfully returned real formats
-        # during local testing.
+        "no_warnings":
+            False,
+
+        "noplaylist":
+            True,
+
+        # mweb successfully returned real
+        # video formats during local testing.
         "extractor_args": {
+
             "youtube": {
-                "player_client": ["mweb"]
+
+                "player_client":
+                    ["mweb"]
+
             }
+
         }
+
     }
+
+    # Only add cookiefile when a cookie
+    # file actually exists.
+
+    if cookie_file:
+
+        options["cookiefile"] = (
+            cookie_file
+        )
 
     return options
 
@@ -72,32 +163,47 @@ def get_video_info(url):
 
     options = get_ytdlp_options()
 
-    print("========================================")
-    print("YouTube request")
-    print("Cookie file:", COOKIE_FILE)
-    print(
-        "Cookie exists:",
-        os.path.exists(COOKIE_FILE)
+    cookie_file = options.get(
+        "cookiefile"
     )
 
-    if os.path.exists(COOKIE_FILE):
+    print("========================================")
+    print("YouTube request")
+    print("Cookie file:", cookie_file)
 
-        try:
+    if cookie_file:
 
-            print(
-                "Cookie file size:",
-                os.path.getsize(
-                    COOKIE_FILE
-                ),
-                "bytes"
-            )
+        print(
+            "Cookie exists:",
+            os.path.exists(cookie_file)
+        )
 
-        except Exception:
-            pass
+        if os.path.exists(cookie_file):
+
+            try:
+
+                print(
+                    "Cookie file size:",
+                    os.path.getsize(
+                        cookie_file
+                    ),
+                    "bytes"
+                )
+
+            except Exception:
+                pass
+
+    else:
+
+        print(
+            "No cookie file is being used."
+        )
 
     print("========================================")
 
-    with yt_dlp.YoutubeDL(options) as ydl:
+    with yt_dlp.YoutubeDL(
+        options
+    ) as ydl:
 
         return ydl.extract_info(
             url,
@@ -240,9 +346,6 @@ def download():
     # --------------------------------------------------
     # AUTHORIZATION
     # --------------------------------------------------
-    #
-    # Keep your own authorization/licensing checks here.
-    #
 
     authorized = True
 
@@ -290,6 +393,12 @@ def download():
     )
 
     # --------------------------------------------------
+    # PREPARE COOKIES
+    # --------------------------------------------------
+
+    cookie_file = prepare_cookie_file()
+
+    # --------------------------------------------------
     # YT-DLP OPTIONS
     # --------------------------------------------------
 
@@ -315,12 +424,7 @@ def download():
         "no_warnings":
             False,
 
-        # Use Render Secret File or local cookies.
-        "cookiefile":
-            COOKIE_FILE,
-
-        # mweb was the client that returned
-        # real video formats locally.
+        # mweb worked during local testing.
         "extractor_args": {
 
             "youtube": {
@@ -331,7 +435,16 @@ def download():
             }
 
         }
+
     }
+
+    # Add writable cookie file.
+
+    if cookie_file:
+
+        options["cookiefile"] = (
+            cookie_file
+        )
 
     # --------------------------------------------------
     # DEBUG INFORMATION
@@ -341,27 +454,29 @@ def download():
     print("DOWNLOAD REQUEST")
     print("URL:", url)
     print("Quality:", height)
-    print("Cookie file:", COOKIE_FILE)
+    print("Cookie file:", cookie_file)
 
-    print(
-        "Cookie exists:",
-        os.path.exists(COOKIE_FILE)
-    )
+    if cookie_file:
 
-    if os.path.exists(COOKIE_FILE):
+        print(
+            "Cookie exists:",
+            os.path.exists(cookie_file)
+        )
 
-        try:
+        if os.path.exists(cookie_file):
 
-            print(
-                "Cookie file size:",
-                os.path.getsize(
-                    COOKIE_FILE
-                ),
-                "bytes"
-            )
+            try:
 
-        except Exception:
-            pass
+                print(
+                    "Cookie file size:",
+                    os.path.getsize(
+                        cookie_file
+                    ),
+                    "bytes"
+                )
+
+            except Exception:
+                pass
 
     print("========================================")
 
