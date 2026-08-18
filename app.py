@@ -4,7 +4,6 @@ import yt_dlp
 import os
 import uuid
 import traceback
-import shutil
 
 app = Flask(__name__)
 
@@ -19,18 +18,6 @@ DOWNLOAD_FOLDER = os.path.join(
     "downloads"
 )
 
-# Render Secret File
-RENDER_COOKIE_FILE = "/etc/secrets/cookies.txt"
-
-# Cookie stored inside the Git repository
-REPO_COOKIE_FILE = os.path.join(
-    BASE_DIR,
-    "cookies.txt"
-)
-
-# Writable temporary location
-RUNTIME_COOKIE_FILE = "/tmp/yt-dlp-cookies.txt"
-
 # bgutil POT server
 BGUTIL_URL = "http://127.0.0.1:4416"
 
@@ -41,82 +28,13 @@ os.makedirs(
 
 
 # ============================================================
-# COOKIE FILE
-# ============================================================
-
-def prepare_cookie_file():
-
-    # --------------------------------------------------------
-    # 1. Try Render Secret File first
-    # --------------------------------------------------------
-
-    if os.path.isfile(RENDER_COOKIE_FILE):
-
-        try:
-
-            shutil.copyfile(
-                RENDER_COOKIE_FILE,
-                RUNTIME_COOKIE_FILE
-            )
-
-            print("========================================")
-            print("COOKIE SOURCE: RENDER SECRET")
-            print("Source:", RENDER_COOKIE_FILE)
-            print("Runtime:", RUNTIME_COOKIE_FILE)
-            print(
-                "Size:",
-                os.path.getsize(RUNTIME_COOKIE_FILE),
-                "bytes"
-            )
-            print("========================================")
-
-            return RUNTIME_COOKIE_FILE
-
-        except Exception as e:
-
-            print(
-                "Could not copy Render cookie file:",
-                repr(e)
-            )
-
-    # --------------------------------------------------------
-    # 2. Try cookies.txt from repository
-    # --------------------------------------------------------
-
-    if os.path.isfile(REPO_COOKIE_FILE):
-
-        print("========================================")
-        print("COOKIE SOURCE: REPOSITORY")
-        print("File:", REPO_COOKIE_FILE)
-        print(
-            "Size:",
-            os.path.getsize(REPO_COOKIE_FILE),
-            "bytes"
-        )
-        print("========================================")
-
-        return REPO_COOKIE_FILE
-
-    # --------------------------------------------------------
-    # 3. No cookies
-    # --------------------------------------------------------
-
-    print("========================================")
-    print("NO COOKIE FILE FOUND")
-    print("========================================")
-
-    return None
-
-
-# ============================================================
 # YT-DLP OPTIONS
 # ============================================================
 
 def get_ytdlp_options():
 
-    cookie_file = prepare_cookie_file()
-
     options = {
+
         "quiet": True,
 
         "no_warnings": False,
@@ -124,19 +42,28 @@ def get_ytdlp_options():
         "noplaylist": True,
 
         "extractor_args": {
+
             "youtube": {
-                "player_client": ["mweb"]
+
+                # Use mweb client
+                "player_client": [
+                    "mweb"
+                ]
+
             },
 
             "youtubepot-bgutilhttp": {
-                "base_url": [BGUTIL_URL]
+
+                # bgutil server
+                "base_url": [
+                    BGUTIL_URL
+                ]
+
             }
+
         }
+
     }
-
-    if cookie_file:
-
-        options["cookiefile"] = cookie_file
 
     return options
 
@@ -149,31 +76,11 @@ def get_video_info(url):
 
     options = get_ytdlp_options()
 
-    cookie_file = options.get(
-        "cookiefile"
-    )
-
     print("========================================")
     print("YOUTUBE REQUEST")
     print("URL:", url)
-    print("Cookie:", cookie_file)
+    print("COOKIES: DISABLED")
     print("BGUTIL:", BGUTIL_URL)
-
-    if cookie_file:
-
-        print(
-            "Cookie exists:",
-            os.path.isfile(cookie_file)
-        )
-
-        if os.path.isfile(cookie_file):
-
-            print(
-                "Cookie size:",
-                os.path.getsize(cookie_file),
-                "bytes"
-            )
-
     print("========================================")
 
     with yt_dlp.YoutubeDL(options) as ydl:
@@ -353,20 +260,11 @@ def download():
     )
 
     # --------------------------------------------------------
-    # COOKIES
-    # --------------------------------------------------------
-
-    cookie_file = prepare_cookie_file()
-
-    # --------------------------------------------------------
     # YT-DLP OPTIONS
     # --------------------------------------------------------
 
     options = {
 
-        # Prefer MP4 video + M4A audio.
-        # If separate streams are unavailable,
-        # fall back to a combined format.
         "format":
             f"bestvideo[height<={height}][ext=mp4]+"
             f"bestaudio[ext=m4a]/"
@@ -408,11 +306,8 @@ def download():
             }
 
         }
+
     }
-
-    if cookie_file:
-
-        options["cookiefile"] = cookie_file
 
     # --------------------------------------------------------
     # LOG
@@ -422,24 +317,8 @@ def download():
     print("DOWNLOAD REQUEST")
     print("URL:", url)
     print("QUALITY:", height)
-    print("COOKIE:", cookie_file)
+    print("COOKIES: DISABLED")
     print("BGUTIL:", BGUTIL_URL)
-
-    if cookie_file:
-
-        print(
-            "COOKIE EXISTS:",
-            os.path.isfile(cookie_file)
-        )
-
-        if os.path.isfile(cookie_file):
-
-            print(
-                "COOKIE SIZE:",
-                os.path.getsize(cookie_file),
-                "bytes"
-            )
-
     print("========================================")
 
     # --------------------------------------------------------
@@ -457,7 +336,7 @@ def download():
             )
 
         # ----------------------------------------------------
-        # FIND FILE
+        # FIND OUTPUT
         # ----------------------------------------------------
 
         matching_files = [
@@ -481,7 +360,10 @@ def download():
                 500
             )
 
-        # Prefer MP4 if multiple files exist
+        # ----------------------------------------------------
+        # PREFER MP4
+        # ----------------------------------------------------
+
         mp4_files = [
 
             f
@@ -545,6 +427,12 @@ def download():
 if __name__ == "__main__":
 
     app.run(
+        host="0.0.0.0",
+        port=int(
+            os.environ.get(
+                "PORT",
+                5000
+            )
+        ),
         debug=True
     )
-
