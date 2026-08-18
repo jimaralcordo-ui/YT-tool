@@ -7,9 +7,9 @@ import shutil
 
 app = Flask(__name__)
 
-# --------------------------------------------------
+# ============================================================
 # PATHS
-# --------------------------------------------------
+# ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -21,13 +21,13 @@ DOWNLOAD_FOLDER = os.path.join(
 # Render Secret File
 RENDER_COOKIE_FILE = "/etc/secrets/cookies.txt"
 
-# Local development cookie file
-LOCAL_COOKIE_FILE = os.path.join(
+# Cookie stored inside the Git repository
+REPO_COOKIE_FILE = os.path.join(
     BASE_DIR,
     "cookies.txt"
 )
 
-# Writable runtime location
+# Writable temporary location
 RUNTIME_COOKIE_FILE = "/tmp/yt-dlp-cookies.txt"
 
 os.makedirs(
@@ -36,17 +36,17 @@ os.makedirs(
 )
 
 
-# --------------------------------------------------
-# COOKIE SETUP
-# --------------------------------------------------
+# ============================================================
+# COOKIE FILE
+# ============================================================
 
 def prepare_cookie_file():
 
-    # ----------------------------------------------
-    # Render
-    # ----------------------------------------------
+    # --------------------------------------------------------
+    # 1. Try Render Secret File first
+    # --------------------------------------------------------
 
-    if os.path.exists(RENDER_COOKIE_FILE):
+    if os.path.isfile(RENDER_COOKIE_FILE):
 
         try:
 
@@ -55,109 +55,87 @@ def prepare_cookie_file():
                 RUNTIME_COOKIE_FILE
             )
 
+            print("========================================")
+            print("COOKIE SOURCE: RENDER SECRET")
+            print("Source:", RENDER_COOKIE_FILE)
+            print("Runtime:", RUNTIME_COOKIE_FILE)
             print(
-                "Using Render Secret File:"
+                "Size:",
+                os.path.getsize(RUNTIME_COOKIE_FILE),
+                "bytes"
             )
-
-            print(
-                RENDER_COOKIE_FILE
-            )
-
-            print(
-                "Copied cookies to:"
-            )
-
-            print(
-                RUNTIME_COOKIE_FILE
-            )
+            print("========================================")
 
             return RUNTIME_COOKIE_FILE
 
         except Exception as e:
 
             print(
-                "ERROR copying Render cookies:",
+                "Could not copy Render cookie file:",
                 repr(e)
             )
 
-            raise
+    # --------------------------------------------------------
+    # 2. Try cookies.txt from repository
+    # --------------------------------------------------------
 
-    # ----------------------------------------------
-    # Local development
-    # ----------------------------------------------
+    if os.path.isfile(REPO_COOKIE_FILE):
 
-    if os.path.exists(LOCAL_COOKIE_FILE):
-
+        print("========================================")
+        print("COOKIE SOURCE: REPOSITORY")
+        print("File:", REPO_COOKIE_FILE)
         print(
-            "Using local cookie file:"
+            "Size:",
+            os.path.getsize(REPO_COOKIE_FILE),
+            "bytes"
         )
+        print("========================================")
 
-        print(
-            LOCAL_COOKIE_FILE
-        )
+        return REPO_COOKIE_FILE
 
-        return LOCAL_COOKIE_FILE
+    # --------------------------------------------------------
+    # 3. No cookies
+    # --------------------------------------------------------
 
-    # ----------------------------------------------
-    # No cookies found
-    # ----------------------------------------------
-
-    print(
-        "WARNING: No cookies.txt found."
-    )
+    print("========================================")
+    print("NO COOKIE FILE FOUND")
+    print("========================================")
 
     return None
 
 
-# --------------------------------------------------
-# YOUTUBE / YT-DLP CONFIG
-# --------------------------------------------------
+# ============================================================
+# YT-DLP OPTIONS
+# ============================================================
 
 def get_ytdlp_options():
 
     cookie_file = prepare_cookie_file()
 
     options = {
+        "quiet": True,
 
-        "quiet":
-            True,
+        "no_warnings": False,
 
-        "no_warnings":
-            False,
+        "noplaylist": True,
 
-        "noplaylist":
-            True,
-
-        # mweb successfully returned real
-        # video formats during local testing.
         "extractor_args": {
-
             "youtube": {
-
-                "player_client":
-                    ["mweb"]
-
+                "player_client": ["mweb"]
             }
-
         }
-
     }
-
-    # Only add cookiefile when a cookie
-    # file actually exists.
 
     if cookie_file:
 
-        options["cookiefile"] = (
-            cookie_file
-        )
+        options["cookiefile"] = cookie_file
 
     return options
 
 
-# --------------------------------------------------
+# ============================================================
 # VIDEO INFO
-# --------------------------------------------------
+# ============================================================
 
 def get_video_info(url):
 
@@ -168,42 +146,28 @@ def get_video_info(url):
     )
 
     print("========================================")
-    print("YouTube request")
-    print("Cookie file:", cookie_file)
+    print("YOUTUBE REQUEST")
+    print("URL:", url)
+    print("Cookie:", cookie_file)
 
     if cookie_file:
 
         print(
             "Cookie exists:",
-            os.path.exists(cookie_file)
+            os.path.isfile(cookie_file)
         )
 
-        if os.path.exists(cookie_file):
+        if os.path.isfile(cookie_file):
 
-            try:
-
-                print(
-                    "Cookie file size:",
-                    os.path.getsize(
-                        cookie_file
-                    ),
-                    "bytes"
-                )
-
-            except Exception:
-                pass
-
-    else:
-
-        print(
-            "No cookie file is being used."
-        )
+            print(
+                "Cookie size:",
+                os.path.getsize(cookie_file),
+                "bytes"
+            )
 
     print("========================================")
 
-    with yt_dlp.YoutubeDL(
-        options
-    ) as ydl:
+    with yt_dlp.YoutubeDL(options) as ydl:
 
         return ydl.extract_info(
             url,
@@ -211,9 +175,9 @@ def get_video_info(url):
         )
 
 
-# --------------------------------------------------
+# ============================================================
 # HOME
-# --------------------------------------------------
+# ============================================================
 
 @app.route("/")
 def home():
@@ -223,9 +187,9 @@ def home():
     )
 
 
-# --------------------------------------------------
-# PROCESS / GET VIDEO INFORMATION
-# --------------------------------------------------
+# ============================================================
+# PROCESS
+# ============================================================
 
 @app.route(
     "/process",
@@ -285,9 +249,9 @@ def process():
         )
 
 
-# --------------------------------------------------
+# ============================================================
 # WAIT PAGE
-# --------------------------------------------------
+# ============================================================
 
 @app.route("/wait")
 def wait():
@@ -316,9 +280,9 @@ def wait():
     )
 
 
-# --------------------------------------------------
+# ============================================================
 # DOWNLOAD
-# --------------------------------------------------
+# ============================================================
 
 @app.route(
     "/download",
@@ -343,22 +307,9 @@ def download():
             400
         )
 
-    # --------------------------------------------------
-    # AUTHORIZATION
-    # --------------------------------------------------
-
-    authorized = True
-
-    if not authorized:
-
-        return (
-            "Download not permitted for this video.",
-            403
-        )
-
-    # --------------------------------------------------
+    # --------------------------------------------------------
     # QUALITY
-    # --------------------------------------------------
+    # --------------------------------------------------------
 
     try:
 
@@ -379,9 +330,9 @@ def download():
 
         height = 720
 
-    # --------------------------------------------------
+    # --------------------------------------------------------
     # OUTPUT FILE
-    # --------------------------------------------------
+    # --------------------------------------------------------
 
     filename = str(
         uuid.uuid4()
@@ -392,15 +343,15 @@ def download():
         filename + ".%(ext)s"
     )
 
-    # --------------------------------------------------
-    # PREPARE COOKIES
-    # --------------------------------------------------
+    # --------------------------------------------------------
+    # COOKIES
+    # --------------------------------------------------------
 
     cookie_file = prepare_cookie_file()
 
-    # --------------------------------------------------
+    # --------------------------------------------------------
     # YT-DLP OPTIONS
-    # --------------------------------------------------
+    # --------------------------------------------------------
 
     options = {
 
@@ -424,65 +375,47 @@ def download():
         "no_warnings":
             False,
 
-        # mweb worked during local testing.
         "extractor_args": {
-
             "youtube": {
-
-                "player_client":
-                    ["mweb"]
-
+                "player_client": ["mweb"]
             }
-
         }
-
     }
-
-    # Add writable cookie file.
 
     if cookie_file:
 
-        options["cookiefile"] = (
-            cookie_file
-        )
+        options["cookiefile"] = cookie_file
 
-    # --------------------------------------------------
-    # DEBUG INFORMATION
-    # --------------------------------------------------
+    # --------------------------------------------------------
+    # LOG
+    # --------------------------------------------------------
 
     print("========================================")
     print("DOWNLOAD REQUEST")
     print("URL:", url)
-    print("Quality:", height)
-    print("Cookie file:", cookie_file)
+    print("QUALITY:", height)
+    print("COOKIE:", cookie_file)
 
     if cookie_file:
 
         print(
-            "Cookie exists:",
-            os.path.exists(cookie_file)
+            "COOKIE EXISTS:",
+            os.path.isfile(cookie_file)
         )
 
-        if os.path.exists(cookie_file):
+        if os.path.isfile(cookie_file):
 
-            try:
-
-                print(
-                    "Cookie file size:",
-                    os.path.getsize(
-                        cookie_file
-                    ),
-                    "bytes"
-                )
-
-            except Exception:
-                pass
+            print(
+                "COOKIE SIZE:",
+                os.path.getsize(cookie_file),
+                "bytes"
+            )
 
     print("========================================")
 
-    # --------------------------------------------------
+    # --------------------------------------------------------
     # DOWNLOAD
-    # --------------------------------------------------
+    # --------------------------------------------------------
 
     try:
 
@@ -494,9 +427,9 @@ def download():
                 [url]
             )
 
-        # --------------------------------------------------
-        # FIND DOWNLOADED FILE
-        # --------------------------------------------------
+        # ----------------------------------------------------
+        # FIND FILE
+        # ----------------------------------------------------
 
         matching_files = [
 
@@ -524,9 +457,9 @@ def download():
             matching_files[0]
         )
 
-        # --------------------------------------------------
+        # ----------------------------------------------------
         # SEND FILE
-        # --------------------------------------------------
+        # ----------------------------------------------------
 
         return send_file(
 
@@ -554,9 +487,9 @@ def download():
         )
 
 
-# --------------------------------------------------
+# ============================================================
 # LOCAL DEVELOPMENT
-# --------------------------------------------------
+# ============================================================
 
 if __name__ == "__main__":
 
