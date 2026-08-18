@@ -1,5 +1,8 @@
+@"
 cookies.txt
+*.cookie
 venv/
 __pycache__/
 downloads/
 *.mp4
+"@ | Set-Content .gitignore

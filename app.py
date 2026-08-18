@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request, send_file
 import yt_dlp
 import os
@@ -29,6 +30,9 @@ REPO_COOKIE_FILE = os.path.join(
 
 # Writable temporary location
 RUNTIME_COOKIE_FILE = "/tmp/yt-dlp-cookies.txt"
+
+# bgutil POT server
+BGUTIL_URL = "http://127.0.0.1:4416"
 
 os.makedirs(
     DOWNLOAD_FOLDER,
@@ -122,6 +126,10 @@ def get_ytdlp_options():
         "extractor_args": {
             "youtube": {
                 "player_client": ["mweb"]
+            },
+
+            "youtubepot-bgutilhttp": {
+                "base_url": [BGUTIL_URL]
             }
         }
     }
@@ -149,6 +157,7 @@ def get_video_info(url):
     print("YOUTUBE REQUEST")
     print("URL:", url)
     print("Cookie:", cookie_file)
+    print("BGUTIL:", BGUTIL_URL)
 
     if cookie_file:
 
@@ -355,7 +364,12 @@ def download():
 
     options = {
 
+        # Prefer MP4 video + M4A audio.
+        # If separate streams are unavailable,
+        # fall back to a combined format.
         "format":
+            f"bestvideo[height<={height}][ext=mp4]+"
+            f"bestaudio[ext=m4a]/"
             f"best[height<={height}][ext=mp4]/"
             f"best[height<={height}]/"
             "18",
@@ -376,9 +390,23 @@ def download():
             False,
 
         "extractor_args": {
+
             "youtube": {
-                "player_client": ["mweb"]
+
+                "player_client": [
+                    "mweb"
+                ]
+
+            },
+
+            "youtubepot-bgutilhttp": {
+
+                "base_url": [
+                    BGUTIL_URL
+                ]
+
             }
+
         }
     }
 
@@ -395,6 +423,7 @@ def download():
     print("URL:", url)
     print("QUALITY:", height)
     print("COOKIE:", cookie_file)
+    print("BGUTIL:", BGUTIL_URL)
 
     if cookie_file:
 
@@ -452,10 +481,32 @@ def download():
                 500
             )
 
-        filepath = os.path.join(
-            DOWNLOAD_FOLDER,
-            matching_files[0]
-        )
+        # Prefer MP4 if multiple files exist
+        mp4_files = [
+
+            f
+
+            for f in matching_files
+
+            if f.lower().endswith(
+                ".mp4"
+            )
+
+        ]
+
+        if mp4_files:
+
+            filepath = os.path.join(
+                DOWNLOAD_FOLDER,
+                mp4_files[0]
+            )
+
+        else:
+
+            filepath = os.path.join(
+                DOWNLOAD_FOLDER,
+                matching_files[0]
+            )
 
         # ----------------------------------------------------
         # SEND FILE
@@ -496,3 +547,4 @@ if __name__ == "__main__":
     app.run(
         debug=True
     )
+
