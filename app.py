@@ -53,12 +53,15 @@ def process():
 
     except Exception as e:
 
-        print("ERROR:", e)
+        import traceback
+
+        print("ERROR:", repr(e))
+        traceback.print_exc()
 
         return render_template(
             "index.html",
-            error="Video could not be accessed."
-        )
+            error=f"Video could not be accessed: {str(e)}"
+     )
 
 
 @app.route("/wait")
