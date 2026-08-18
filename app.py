@@ -7,7 +7,7 @@ import traceback
 app = Flask(__name__)
 
 # ============================================================
-# PATHS
+# PATHSs
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +26,16 @@ BGUTIL_URL = os.environ.get(
     "http://127.0.0.1:4416"
 )
 
+# ============================================================
+# COOKIES
+# ============================================================
+
+# cookies.txt should be located beside app.py
+COOKIES_FILE = os.path.join(
+    BASE_DIR,
+    "cookies.txt"
+)
+
 os.makedirs(
     DOWNLOAD_FOLDER,
     exist_ok=True
@@ -38,14 +48,12 @@ os.makedirs(
 
 def get_common_ytdlp_options():
 
-    return {
+    options = {
 
         # ----------------------------------------------------
         # LOGGING
         # ----------------------------------------------------
 
-        # Keep verbose enabled temporarily so we can see
-        # whether bgutil is actually being used.
         "quiet": False,
 
         "verbose": True,
@@ -59,11 +67,23 @@ def get_common_ytdlp_options():
         "noplaylist": True,
 
         # ----------------------------------------------------
+        # COOKIES
+        # ----------------------------------------------------
+
+        # Use the exported YouTube cookies.
+        #
+        # The file must exist at:
+        #
+        # /app/cookies.txt
+        #
+        # when running inside Docker/Render.
+
+        "cookiefile": COOKIES_FILE,
+
+        # ----------------------------------------------------
         # JAVASCRIPT RUNTIME
         # ----------------------------------------------------
 
-        # yt-dlp can use Deno for YouTube's current JS
-        # challenge / extraction requirements.
         "js_runtimes": {
             "deno": {}
         },
@@ -74,7 +94,10 @@ def get_common_ytdlp_options():
 
         "extractor_args": {
 
-            # YouTube client
+            # ------------------------------------------------
+            # YOUTUBE
+            # ------------------------------------------------
+
             "youtube": {
 
                 "player_client": [
@@ -83,7 +106,10 @@ def get_common_ytdlp_options():
 
             },
 
-            # bgutil PO Token provider
+            # ------------------------------------------------
+            # BGUTIL PO TOKEN PROVIDER
+            # ------------------------------------------------
+
             "youtubepot-bgutilhttp": {
 
                 "base_url": [
@@ -95,6 +121,8 @@ def get_common_ytdlp_options():
         }
 
     }
+
+    return options
 
 
 # ============================================================
@@ -108,7 +136,14 @@ def get_video_info(url):
     print("========================================")
     print("YOUTUBE REQUEST")
     print("URL:", url)
-    print("COOKIES: DISABLED")
+
+    if os.path.exists(COOKIES_FILE):
+        print("COOKIES: ENABLED")
+        print("COOKIE FILE:", COOKIES_FILE)
+    else:
+        print("COOKIES: NOT FOUND")
+        print("EXPECTED:", COOKIES_FILE)
+
     print("JS RUNTIME: DENO")
     print("PLAYER CLIENT: MWEB")
     print("BGUTIL:", BGUTIL_URL)
@@ -321,7 +356,14 @@ def download():
     print("DOWNLOAD REQUEST")
     print("URL:", url)
     print("QUALITY:", height)
-    print("COOKIES: DISABLED")
+
+    if os.path.exists(COOKIES_FILE):
+        print("COOKIES: ENABLED")
+        print("COOKIE FILE:", COOKIES_FILE)
+    else:
+        print("COOKIES: NOT FOUND")
+        print("EXPECTED:", COOKIES_FILE)
+
     print("JS RUNTIME: DENO")
     print("PLAYER CLIENT: MWEB")
     print("BGUTIL:", BGUTIL_URL)
@@ -446,3 +488,4 @@ if __name__ == "__main__":
         debug=True
 
     )
+
